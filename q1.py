@@ -93,68 +93,67 @@ class Parser:
             for j in self.rules[i]:
                 self.reverse_rules[j][i] = self.rules[i][j]
 
+    def get_new_tag_dict(self, x, y, pro, bt=0):
+        return {'LHS':x, 'RHS':y, 'pro': pro, 'bt': bt}
+
     def parse(self, text):
         tokens = text.split(" ")
-        #print tokens
-        #table = [[[] for j in xrange(len(tokens) + 1)] for i in xrange(len(tokens))]
-        table = [[{'best': -sys.maxint - 1, 'tags': []} for j in xrange(len(tokens) + 1)] for i in xrange(len(tokens))]
-        backtrack = {}
+        table = [[[] for j in xrange(len(tokens) + 1)] for i in xrange(len(tokens))]
+
         for offset in xrange(1, len(tokens) + 1):
             for i in xrange(len(tokens) - offset + 1):
                 if offset == 1:
                     tmp = self.lookup(tokens[i])
                     for (x, y, pro) in tmp:
-                        table[i][i + offset]['tags'].append(x)
-                        if pro > table[i][i + offset]['best']:
-                            table[i][i + offset]['best'] = pro
-                            backtrack[(i, i + offset)] = (x, y, 0)
-                    continue
+                        table[i][i + offset].append(self.get_new_tag_dict(x, y, pro))
                 for mid in xrange(i + 1, i + offset):
-                    if not table[i][mid]['tags'] or not table[mid][i + offset]['tags']:
+                    if not table[i][mid] or not table[mid][i + offset]:
                         continue
-                    # l_best, l_tag = table[i][mid]['best'], table[i][mid]['tag']
-                    # r_best, r_tag = table[mid][i + offset]['best'], table[mid][i + offset]['tag']
-                    # tmp = self.lookup(l_tag + " " + r_tag)
-                    l_best = table[i][mid]['best']
-                    r_best = table[mid][i + offset]['best']
-                    for l_tag in table[i][mid]['tags']:
-                        for r_tag in table[mid][i + offset]['tags']:
-                            tmp = self.lookup(l_tag + " " + r_tag)
+                    for left in table[i][mid]:
+                        for right in table[mid][i + offset]:
+                            tmp = self.lookup(left['LHS'] + " " + right['LHS'])
                             if not tmp:
                                 continue
                             for (x, y, pro) in tmp:
-                                table[i][i + offset]['tags'].append(x)
-                                if pro + r_best + l_best > table[i][i + offset]['best']:
-                                    table[i][i + offset]['best'] = pro
-                                    backtrack[(i, i + offset)] = (x, y, mid)
+                                table[i][i + offset].append(self.get_new_tag_dict(x, y, pro + left['pro'] + right['pro'], mid))
 
 
 
-                # if offset == 1:
-                #     tmp = self.lookup(tokens[i].lower())
-                #     if not tmp:
-                #     	continue
-                #     for (tag, bt, pro) in tmp:
-                #     	table[i][i + offset].append((tag, pro, i, bt))
-                #     continue
 
-                # for mid in xrange(i + 1, i + offset):
-                #     if not table[i][mid] or not table[mid][i + offset]:
-                #         continue
-                #     for (l_tag, l_pro, index1, _) in table[i][mid]:
-                #         for (r_tag, r_pro, index2, _) in table[mid][i + offset]:
-                #             tmp = self.lookup(l_tag + " " + r_tag)
-                #             if not tmp:
-                #                 continue
 
-                #             for (tag, bt, pro) in tmp:
-                #                 # The return probability is in logarithm, so, using addition instead of multiplication
-                #                 table[i][i + offset].append((tag, l_pro + r_pro + pro, mid, bt))
-                #                 #backtrack[(i, i + offset, tag)] = mid
-        #print table
-        if not table[0][-1]['tags']:
+        #table = [[[] for j in xrange(len(tokens) + 1)] for i in xrange(len(tokens))]
+        # table = [[{'best': -sys.maxint - 1, 'tags': []} for j in xrange(len(tokens) + 1)] for i in xrange(len(tokens))]
+        # backtrack = {}
+        # for offset in xrange(1, len(tokens) + 1):
+        #     for i in xrange(len(tokens) - offset + 1):
+        #         if offset == 1:
+        #             tmp = self.lookup(tokens[i])
+        #             for (x, y, pro) in tmp:
+        #                 table[i][i + offset]['tags'].append(x)
+        #                 if pro > table[i][i + offset]['best']:
+        #                     table[i][i + offset]['best'] = pro
+        #                     backtrack[(i, i + offset)] = (x, y, 0)
+        #             continue
+        #         for mid in xrange(i + 1, i + offset):
+        #             if not table[i][mid]['tags'] or not table[mid][i + offset]['tags']:
+        #                 continue
+        #             l_best = table[i][mid]['best']
+        #             r_best = table[mid][i + offset]['best']
+        #             for l_tag in table[i][mid]['tags']:
+        #                 for r_tag in table[mid][i + offset]['tags']:
+        #                     tmp = self.lookup(l_tag + " " + r_tag)
+        #                     if not tmp:
+        #                         continue
+        #                     for (x, y, pro) in tmp:
+        #                         table[i][i + offset]['tags'].append(x)
+        #                         if pro + r_best + l_best > table[i][i + offset]['best']:
+        #                             table[i][i + offset]['best'] = pro
+        #                             backtrack[(i, i + offset)] = (x, y, mid)
+
+
+        if not table[0][-1]:
             return ""
-        return self.recursive_print_tree(0, len(tokens), backtrack)
+        return self.recursive_print_tree(0, len(tokens), table)
         #print self.rules["ADVP_RB"]
         # print table[0][1]
         # print table[0][-1]
@@ -164,55 +163,42 @@ class Parser:
 
     def lookup(self, items):
         output = []
-        # print self.rules['DT']['the']
         if items in self.reverse_rules:
             for i in self.reverse_rules[items]:
-                # print i
-                # print items
-                # print self.rules[i][items]
-                # print self.reverse_rules[items][i]
                 output.append((i, items, math.log(self.reverse_rules[items][i], 10)))
         elif len(items.split(" ")) == 1:
             for i in self.reverse_rules["<unk>"]:
                 output.append((i, items, math.log(self.reverse_rules["<unk>"][i], 10)))
         return output
 
-        # for i in self.rules:
-        #     for j in self.rules[i]:
-        #         if j == items:
-        #             output.append((i, j, math.log(self.rules[i][j], 10)))
 
-        # if not output and len(items.split(" ")) != 2:
-        #     for i in self.rules:
-        #         for j in self.rules[i]:
-        #             if j == "<unk>":
-        #                 output.append((i, j, math.log(self.rules[i][j], 10)))
-        # return output
-
-    def recursive_print_tree(self, l, r, bt):
+    def recursive_print_tree(self, l, r, table, tag_chose = ""):
         if l + 1 == r:
-            return "(" + bt[(l, r)][0] + " " + bt[(l, r)][1] + ")"
-        mid = bt[(l, r)][2]
-        return "(" + bt[(l, r)][0] + " " + self.recursive_print_tree(l, mid, bt) + " " + self.recursive_print_tree(mid, r, bt) + ")"
+            max_pro = -sys.maxint - 1
+            best_tag = {}
+            for tag in table[l][r]:
+                if tag['pro'] > max_pro:
+                    max_pro = tag['pro']
+                    best_tag = tag
+            return "(" + best_tag['LHS'] + " " + best_tag['RHS'] + ")"
+        max_pro = -sys.maxint - 1
+        best_tag = {}
+        for tag in table[l][r]:
+            if tag_chose != "" and tag['LHS'] != tag_chose:
+                continue
+            if tag['pro'] > max_pro:
+                max_pro = tag['pro']
+                best_tag = tag
+        l_tag = best_tag['RHS'].split()[0]
+        r_tag = best_tag['RHS'].split()[1]
+        return "(" + best_tag['LHS'] + " " + self.recursive_print_tree(l, best_tag['bt'], table, l_tag) + " " + self.recursive_print_tree(best_tag['bt'], r, table, r_tag) + ")"
+
+
 
         # if l + 1 == r:
-        # 	max_pro = 0
-        # 	max_index = -1
-        # 	for i in xrange(len(table[l][r])):
-        # 		if table[l][r][i][1] > max_pro:
-        # 			max_pro = table[l][r][i][1]
-        # 			max_index = i
-        #     return "(" + table[l][r][max_index][0] + " " + table[l][r][max_index][0][3] + ")"
-        # for i in xrange(len(table[l][r])):
-        # 	if table
-        # return "(" + table[l][r][0] + " -> " + self.recursive_print_tree(table, backtrack, l,
-        #                                                                  mid) + " " + self.recursive_print_tree(table,
-        #                                                                                                         backtrack,
-        #                                                                                                         mid,
-        #                                                                                                         r) + ")"
-
-    
-
+        #     return "(" + bt[(l, r)][0] + " " + bt[(l, r)][1] + ")"
+        # mid = bt[(l, r)][2]
+        # return "(" + bt[(l, r)][0] + " " + self.recursive_print_tree(l, mid, bt) + " " + self.recursive_print_tree(mid, r, bt) + ")"
 
 def pretty(d, indent=0):
     for key, value in d.items():
@@ -243,10 +229,10 @@ f_output = open('dev.parses', 'w')
 i = 1
 p = Parser(lg.probability)
 for line in lines:
-    print i
-    i += 1
     sys.stdout.flush()
     f_output.write(p.parse(line.strip()) + "\n")
+    print str(i) + " done."
+    i += 1
 
 
 
