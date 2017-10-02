@@ -1,0 +1,1 @@
+(TOP (SQ* (NP_PRP i) (S_VP (MD would) (VP (VB like) (S (S* (SQ* (NP_PRP it) (S_VP (X_TO to) (SQ (VBP have) (NP* (FRAG_NP (SYM a) (VP_VB stop)) (PP (IN in) (NP* (NNP new) (NNP york))))))) (CC and)) (SQ* (NP_PRP i) (S_VP (MD would) (S_VP (VB like) (NP* (FRAG_NP (SYM a) (NN flight)) (SBAR (WHNP_WDT that) (S_VP (VBZ serves) (FRAG_NP_NN <unk>))))))))))) (PUNC .))
