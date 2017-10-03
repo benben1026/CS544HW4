@@ -3,7 +3,7 @@ import pprint
 import fileinput
 import math
 import sys
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import time
 
 
@@ -126,7 +126,14 @@ class Parser:
                                     back[(i, j)][x] = (x, y, k)
         if not back[(0, len(tokens))]:
             return ""
-        return self.recursive_print_tree(0, len(tokens), back)    
+        best_pro = -sys.maxint - 1
+        best_tag = ""
+        for t in best[(0, len(tokens))]:
+            if best[(0,len(tokens))][t] > best_pro:
+                best_pro = best[(0 ,len(tokens))][t]
+                best_tag = t
+        tag = best_tag
+        return self.recursive_print_tree(0, len(tokens), back, tag)    
 
         #print self.rules["ADVP_RB"]
         # print table[0][1]
@@ -145,8 +152,7 @@ class Parser:
                 output.append((i, items, math.log(self.reverse_rules["<unk>"][i], 10)))
         return output
 
-
-    def recursive_print_tree(self, l, r, back, tag = 'TOP'):
+    def recursive_print_tree(self, l, r, back, tag):
         if l + 1 == r:
             return "(" + back[(l, r)][tag][0] + " " + back[(l, r)][tag][1] + ")"
         mid = back[(l, r)][tag][2]
@@ -186,21 +192,30 @@ elapsed_time = []
 i = 1
 p = Parser(lg.probability)
 for line in lines:
-    sys.stdout.flush()
     start_time = time.time()
     tmp = p.parse(line.strip())
-    #length_time.append((len(line.split()), time.time() - start_time))
-    text_length.append(len(line.split()))
-    elapsed_time.append((time.time() - start_time) * 1000)
+    text_length.append(math.log(len(line.split()), 10))
+    elapsed_time.append(math.log((time.time() - start_time) * 1000 * 300, 10))
     f_output.write(tmp + "\n")
 
-    print str(i) + " done."
-    i += 1
+    #print str(i) + " done."
+    #i += 1
+    #sys.stdout.flush()
+
+plt.figure(1)
+# plt.subplot(211)
+plt.plot(text_length, elapsed_time, 'bo')
+# plt.subplot(212)
+# plt.plot()
+# plt.figure(2)
+a = [0, 1, 1.2, 1.4, 1.6, 1.8, 2]
+plt.plot(a, [i * 3 for i in a])
 
 
-# plt.plot(text_length, elapsed_time, 'bo')
-# plt.axis([0, 20, 0, 200])
-# plt.show()
+plt.axis([0, max(text_length), 0, max(elapsed_time)])
+plt.xlabel('Text Length (log)')
+plt.ylabel('Elapsed Time (log)')
+plt.show()
 
 # p = Parser(lg.probability)
 # print p.parse("The flight should be eleven a.m tomorrow .")
