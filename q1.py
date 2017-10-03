@@ -3,6 +3,8 @@ import pprint
 import fileinput
 import math
 import sys
+import matplotlib.pyplot as plt
+import time
 
 
 class TreeNode:
@@ -150,7 +152,6 @@ class Parser:
         #                             table[i][i + offset]['best'] = pro
         #                             backtrack[(i, i + offset)] = (x, y, mid)
 
-
         if not table[0][-1]:
             return ""
         return self.recursive_print_tree(0, len(tokens), table)
@@ -226,15 +227,27 @@ with open('dev.strings') as f:
     lines = f.readlines()
 f_output = open('dev.parses', 'w')
 
+#plot_file = open('length-time', 'w') 
+text_length = []
+elapsed_time = []
 i = 1
 p = Parser(lg.probability)
 for line in lines:
     sys.stdout.flush()
-    f_output.write(p.parse(line.strip()) + "\n")
+    start_time = time.time()
+    tmp = p.parse(line.strip())
+    #length_time.append((len(line.split()), time.time() - start_time))
+    text_length.append(len(line.split()))
+    elapsed_time.append((time.time() - start_time) * 1000)
+    f_output.write(tmp + "\n")
+
     print str(i) + " done."
     i += 1
 
 
+plt.plot(text_length, elapsed_time, 'bo')
+plt.axis([0, 20, 0, 200])
+plt.show()
 
 # p = Parser(lg.probability)
 # print p.parse("The flight should be eleven a.m tomorrow .")
