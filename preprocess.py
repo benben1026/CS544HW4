@@ -7,7 +7,8 @@ for line in fileinput.input():
     t = tree.Tree.from_str(line)
 
     # Binarize, inserting 'X*' nodes.
-    t.binarize()
+    #t.binarize()
+    t.binarize_with_markovization()
 
     # Remove unary nodes
     t.remove_unit()

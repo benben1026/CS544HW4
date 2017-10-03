@@ -216,11 +216,29 @@ class Tree(object):
                         prev = Node(vlabel, [prev, child])
                     node.insert_child(0, prev)
 
+    def binarize_with_markovization(self):
+        nodes = list(self.bottomup())
+        for node in nodes:
+            if len(node.children) > 2:
+                if node.label in ['SQ']:
+                    children = list(node.children)
+                    children.reverse()
+                    prev = children[0]
+                    for i in xrange(1, len(children) - 1):
+                        prev = Node(node.label + "[" + children[i + 1].label + "]", [children[i], prev])
+                    node.append_child(prev)
+                else:
+                    children = list(node.children)
+                    prev = children[0]
+                    for i in xrange(1, len(children) - 1):
+                        prev = Node(node.label + "[" + children[i + 1].label + "]", [prev, children[i]])
+                    node.insert_child(0, prev)
+
     def unbinarize(self):
         """ Undo binarization by removing any nodes ending with *. """
         def visit(node):
             children = sum([visit(child) for child in node.children], [])
-            if node.label.endswith('*'):
+            if node.label.endswith(']'):
                 return children
             else:
                 return [Node(node.label, children)]
