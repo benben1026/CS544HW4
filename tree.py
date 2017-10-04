@@ -216,7 +216,7 @@ class Tree(object):
                         prev = Node(vlabel, [prev, child])
                     node.insert_child(0, prev)
 
-    def binarize_with_markovization(self):
+    def binarize_with_markovization(self, order):
         nodes = list(self.bottomup())
         for node in nodes:
             if len(node.children) > 2:
@@ -225,13 +225,25 @@ class Tree(object):
                     children.reverse()
                     prev = children[0]
                     for i in xrange(1, len(children) - 1):
-                        prev = Node(node.label + "[" + children[i + 1].label + "]", [children[i], prev])
+                        markov = []
+                        for j in xrange(i + 1, i + 1 + order):
+                            if j < len(children):
+                                markov.append(children[j].label)
+                            else:
+                                break
+                        prev = Node(node.label + "[" + ",".join(markov) + "]", [children[i], prev])
                     node.append_child(prev)
                 else:
                     children = list(node.children)
                     prev = children[0]
                     for i in xrange(1, len(children) - 1):
-                        prev = Node(node.label + "[" + children[i + 1].label + "]", [prev, children[i]])
+                        markov = []
+                        for j in xrange(i + 1, i + 1 + order):
+                            if j < len(children):
+                                markov.append(children[j].label)
+                            else:
+                                break
+                        prev = Node(node.label + "[" + ",".join(markov) + "]", [prev, children[i]])
                     node.insert_child(0, prev)
 
     def parent_annotation(self):

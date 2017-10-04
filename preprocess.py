@@ -8,7 +8,7 @@ for line in fileinput.input():
 
     # Binarize, inserting 'X*' nodes.
     #t.binarize()
-    t1.binarize_with_markovization()
+    t1.binarize_with_markovization(2)
 
     # Remove unary nodes
     t1.remove_unit()
