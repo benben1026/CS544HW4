@@ -234,17 +234,36 @@ class Tree(object):
                         prev = Node(node.label + "[" + children[i + 1].label + "]", [prev, children[i]])
                     node.insert_child(0, prev)
 
+    def parent_annotation(self):
+        nodes = list(self.bottomup())
+        for node in nodes:
+            if len(node.children) == 0:
+                continue
+            for child in list(node.children):
+                if len(child.children) == 0:
+                    continue
+                if node.label.endswith("*"):
+                    t = node.label[:-1]
+                else:
+                    t = node.label
+                child.label = child.label + "{" + t + "}"
+
     def unbinarize(self):
         """ Undo binarization by removing any nodes ending with *. """
         def visit(node):
             children = sum([visit(child) for child in node.children], [])
-            if node.label.endswith(']'):
+            if node.label.find("{") != -1:
+                node.label = node.label[:node.label.find("{")]
+            if node.label.endswith(']') or node.label.endswith('*'):
                 return children
             else:
                 return [Node(node.label, children)]
         roots = visit(self.root)
-        assert len(roots) == 1
-        self.root = roots[0]
+        #assert len(roots) == 1
+        if len(roots) == 0:
+            self.root = None
+        else:
+            self.root = roots[0]
 
 if __name__ == "__main__":
     import sys

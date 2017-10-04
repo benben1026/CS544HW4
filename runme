@@ -10,7 +10,19 @@ OUTPUT=$3;
 # you should change the lines below
 
 # prepare the training data
-$SCRIPTDIR/preprocess.py < $TRAINING | $SCRIPTDIR/unknown.py > $SCRIPTDIR/tmpfile
+$SCRIPTDIR/preprocess.py < $TRAINING > tmp
+sed -n 1~2p tmp > a
+sed -n 2~2p tmp > b
+$SCRIPTDIR/unknown.py < $SCRIPTDIR/a > $SCRIPTDIR/sibling_rules
+$SCRIPTDIR/unknown.py < $SCRIPTDIR/b > $SCRIPTDIR/parent_rules
+paste <(sed G sibling_rules) <(sed 's/.*/\n\0/g' parent_rules) > tmp
+sed 's/\t//g' tmp > tmpfile
+
+rm a
+rm b
+rm sibling_rules
+rm parent_rules
+# | $SCRIPTDIR/unknown.py > $SCRIPTDIR/tmpfile
 
 python $SCRIPTDIR/q1.py < tmpfile
 python $SCRIPTDIR/postprocess.py < $SCRIPTDIR/dev.parses > $SCRIPTDIR/dev.parses.post

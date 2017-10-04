@@ -84,7 +84,7 @@ class Parser:
             for j in self.rules[i]:
                 self.reverse_rules[j][i] = self.rules[i][j]
 
-    def parse(self, text):
+    def parse(self, text, mode = 0):
         tokens = text.split(" ")
         best = {}
         back = {}
@@ -113,7 +113,9 @@ class Parser:
                                 if p > best[(i, j)][x]:
                                     best[(i, j)][x] = p
                                     back[(i, j)][x] = (x, y, k)
-        if not back[(0, len(tokens))]:
+        if not back[(0, len(tokens))] and mode == 0:
+            return ""
+        elif not back[(0, len(tokens))]:
             output = []
             for i in xrange(len(tokens)):
                 best_pro = -sys.maxint - 1
@@ -166,14 +168,24 @@ def pretty(d, indent=0):
             print('\t' * (indent + 1) + str(value))
 
 
-lg = LearnGrammar()
+lg_sibling = LearnGrammar()
+lg_parent = LearnGrammar()
+flag = True
 for line in fileinput.input():
-    root = lg.recursion_build_tree(line)
-    lg.parse_tree(root)
+    if flag:
+        root = lg_sibling.recursion_build_tree(line)
+        lg_sibling.parse_tree(root)
+        flag = not flag
+    else:
+        root = lg_parent.recursion_build_tree(line)
+        lg_parent.parse_tree(root)
+        flag = not flag
 
-output_pro = open("rules", "w")
-output_pro.write(lg.calculate_probability())
-output_pro.close()
+a = lg_sibling.calculate_probability()
+b = lg_parent.calculate_probability()
+# output_pro = open("rules_sibling", "w")
+# output_pro.write(a)
+# output_pro.close()
 
 
 with open('dev.strings') as f:
@@ -184,32 +196,31 @@ f_output = open('dev.parses', 'w')
 text_length = []
 elapsed_time = []
 i = 1
-p = Parser(lg.probability)
+p_sibling = Parser(lg_sibling.probability)
+p_parent = Parser(lg_parent.probability)
 for line in lines:
-    start_time = time.time()
-    tmp = p.parse(line.strip())
-    text_length.append(math.log(len(line.split()), 10))
-    elapsed_time.append(math.log((time.time() - start_time) * 1000 * 300, 10))
+    # start_time = time.time()
+    tmp = p_sibling.parse(line.strip())
+    if tmp.strip() == "":
+        tmp = p_parent.parse(line.strip(), 1)
+    # text_length.append(math.log(len(line.split()), 10))
+    # elapsed_time.append(math.log((time.time() - start_time) * 1000 * 300, 10))
     f_output.write(tmp + "\n")
 
     #print str(i) + " done."
     #i += 1
     #sys.stdout.flush()
 
-plt.figure(1)
-# plt.subplot(211)
-plt.plot(text_length, elapsed_time, 'bo')
-# plt.subplot(212)
-# plt.plot()
-# plt.figure(2)
-a = [0, 1, 1.2, 1.4, 1.6, 1.8, 2]
-plt.plot(a, [i * 3 for i in a])
+# plt.figure(1)
+# plt.plot(text_length, elapsed_time, 'bo')
+# a = [0, 1, 1.2, 1.4, 1.6, 1.8, 2]
+# plt.plot(a, [i * 3 for i in a])
 
 
-plt.axis([0, max(text_length), 0, max(elapsed_time)])
-plt.xlabel('Text Length (log)')
-plt.ylabel('Elapsed Time (log)')
-plt.show()
+# plt.axis([0, max(text_length), 0, max(elapsed_time)])
+# plt.xlabel('Text Length (log)')
+# plt.ylabel('Elapsed Time (log)')
+# plt.show()
 
 # p = Parser(lg.probability)
 # print p.parse("The flight should be eleven a.m tomorrow .")

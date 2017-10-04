@@ -8,8 +8,8 @@ for line in fileinput.input():
     if t.root is None:
         print
         continue
-    t.restore_unit()
     t.unbinarize()
+    t.restore_unit()
 
     print t
     
