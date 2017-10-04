@@ -11,12 +11,16 @@ OUTPUT=$3;
 
 # prepare the training data
 $SCRIPTDIR/preprocess.py < $TRAINING | $SCRIPTDIR/unknown.py > $SCRIPTDIR/tmpfile
+
+python $SCRIPTDIR/q1.py < tmpfile
+python $SCRIPTDIR/postprocess.py < $SCRIPTDIR/dev.parses > $SCRIPTDIR/dev.parses.post
+python $SCRIPTDIR/evalb.py $SCRIPTDIR/dev.parses.post $SCRIPTDIR/dev.trees
 # you should probably do something with the file you just wrote
 # (and you may not want to call it tmpfile). But in this stub code I'm just going
 # to create a grammar without paying attention to the input
-$SCRIPTDIR/demogrammar.py > $SCRIPTDIR/demogrammar
+#$SCRIPTDIR/demogrammar.py > $SCRIPTDIR/demogrammar
 
 # run your parser on your input and save to your output. The provided parser is
 # strictly right branching (cf. slides) and gets 12.4 f on dev. It ignores the grammar
 
-$SCRIPTDIR/rbranch.py -i $INPUT -o $OUTPUT
+#$SCRIPTDIR/rbranch.py -i $INPUT -o $OUTPUT

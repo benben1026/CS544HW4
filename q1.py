@@ -10,19 +10,8 @@ import time
 class TreeNode:
     def __init__(self, val):
         self.val = val
-        # self.node_type = self.check_type(val) # 0 -> Nonterminals; 1 -> Terminals
         self.left = None
         self.right = None
-
-    # def check_type(self, val):
-    # 	if val == "<unk>":
-    # 		return 1
-    # 	elif val[-1] >= 'a' and val[0] <= 'z':
-    # 		return 1
-    # 	elif val.find("_") or val[-1] == '*' or (val[-1] >= 'A' and val[-1] <= 'Z') :
-    # 		return 0
-    # 	else: #punctuation
-    # 		return 1
 
 
 class LearnGrammar:
@@ -125,22 +114,20 @@ class Parser:
                                     best[(i, j)][x] = p
                                     back[(i, j)][x] = (x, y, k)
         if not back[(0, len(tokens))]:
-            return ""
-        best_pro = -sys.maxint - 1
-        best_tag = ""
-        for t in best[(0, len(tokens))]:
-            if best[(0,len(tokens))][t] > best_pro:
-                best_pro = best[(0 ,len(tokens))][t]
-                best_tag = t
-        tag = best_tag
-        return self.recursive_print_tree(0, len(tokens), back, tag)    
-
-        #print self.rules["ADVP_RB"]
-        # print table[0][1]
-        # print table[0][-1]
-        #print table
-        #pretty(backtrack)
-        #print self.recursive_print_tree(table, backtrack, 0, len(tokens))
+            output = []
+            for i in xrange(len(tokens)):
+                best_pro = -sys.maxint - 1
+                best_tag = ""
+                for t in best[(i, i + 1)]:
+                    if best[(i, i + 1)][t] > best_pro:
+                        best_pro = best[(i, i + 1)][t]
+                        best_tag = t
+                tag = best_tag
+                if tag == "":
+                    continue
+                output.append("(" + back[(i, i + 1)][tag][0] + " " + back[(i, i + 1)][tag][1] + ")")
+            return " ".join(output)
+        return self.recursive_print_tree(0, len(tokens), best, back)    
 
     def lookup(self, items):
         output = []
@@ -152,13 +139,23 @@ class Parser:
                 output.append((i, items, math.log(self.reverse_rules["<unk>"][i], 10)))
         return output
 
-    def recursive_print_tree(self, l, r, back, tag):
+    def recursive_print_tree(self, l, r, best, back, tag=None):
+        if tag == None:
+            best_pro = -sys.maxint - 1
+            best_tag = ""
+            for t in best[(l, r)]:
+                if best[(l,r)][t] > best_pro:
+                    best_pro = best[(l ,r)][t]
+                    best_tag = t
+            tag = best_tag
+        if tag == None:
+            return
         if l + 1 == r:
             return "(" + back[(l, r)][tag][0] + " " + back[(l, r)][tag][1] + ")"
         mid = back[(l, r)][tag][2]
         l_tag = back[(l, r)][tag][1].split()[0]
         r_tag = back[(l, r)][tag][1].split()[1]
-        return "(" + back[(l, r)][tag][0] + " " + self.recursive_print_tree(l, mid, back, l_tag) + " " + self.recursive_print_tree(mid, r, back, r_tag) + ")"
+        return "(" + back[(l, r)][tag][0] + " " + self.recursive_print_tree(l, mid, best, back, l_tag) + " " + self.recursive_print_tree(mid, r, best, back, r_tag) + ")"
 
 def pretty(d, indent=0):
     for key, value in d.items():
@@ -170,10 +167,7 @@ def pretty(d, indent=0):
 
 
 lg = LearnGrammar()
-with open('train.trees.pre.unk') as f:
-    lines = f.readlines()
-#for line in fileinput.input():
-for line in lines:
+for line in fileinput.input():
     root = lg.recursion_build_tree(line)
     lg.parse_tree(root)
 
